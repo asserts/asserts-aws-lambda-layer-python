@@ -6,12 +6,14 @@ from asserts_pylambda.LambdaMetrics import LambdaMetrics
 
 logger = logging.getLogger()
 
+
 def reraise(tp, value, tb=None):
-        # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[Any]) -> None
-        assert value is not None
-        if value.__traceback__ is not tb:
-            raise value.with_traceback(tb)
-        raise value
+    # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[Any]) -> None
+    assert value is not None
+    if value.__traceback__ is not tb:
+        raise value.with_traceback(tb)
+    raise value
+
 
 def _wrap_init_error(init_error):
     # type: (F) -> F
@@ -20,6 +22,7 @@ def _wrap_init_error(init_error):
         return init_error(*args, **kwargs)
 
     return sentry_init_error  # type: ignore
+
 
 def _wrap_handler(handler):
     # type: (F) -> F
@@ -42,6 +45,7 @@ def _wrap_handler(handler):
             metrics.recordLatency(diff_time.total_seconds())
 
     return asserts_handler
+
 
 class AssertsLambdaPython():
     def __init__(self):
@@ -87,7 +91,7 @@ class AssertsLambdaPython():
 
             def asserts_to_json(*args, **kwargs):
                 # type: (*Any, **Any) -> Any
-                #_drain_queue()
+                # _drain_queue()
                 return old_to_json(*args, **kwargs)
 
             lambda_bootstrap.to_json = asserts_to_json
@@ -99,7 +103,7 @@ class AssertsLambdaPython():
             old_handle_event_request = lambda_bootstrap.handle_event_request
 
             def asserts_handle_event_request(  # type: ignore
-                lambda_runtime_client, request_handler, *args, **kwargs
+                    lambda_runtime_client, request_handler, *args, **kwargs
             ):
                 request_handler = _wrap_handler(request_handler)
                 return old_handle_event_request(
@@ -115,7 +119,7 @@ class AssertsLambdaPython():
                 # type: (F) -> F
                 def inner(*args, **kwargs):
                     # type: (*Any, **Any) -> Any
-                    #_drain_queue()
+                    # _drain_queue()
                     return f(*args, **kwargs)
 
                 return inner  # type: ignore
@@ -130,6 +134,7 @@ class AssertsLambdaPython():
                     lambda_bootstrap.LambdaRuntimeClient.post_invocation_error
                 )
             )
+
 
 def get_lambda_bootstrap():
     # type: () -> Optional[Any]
@@ -158,7 +163,7 @@ def get_lambda_bootstrap():
         module = sys.modules["__main__"]
         # python3.9 runtime
         if hasattr(module, "awslambdaricmain") and hasattr(
-            module.awslambdaricmain, "bootstrap"  # type: ignore
+                module.awslambdaricmain, "bootstrap"  # type: ignore
         ):
             logger.info('awslambdaricmain')
             return module.awslambdaricmain.bootstrap  # type: ignore
