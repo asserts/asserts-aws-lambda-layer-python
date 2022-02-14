@@ -3,8 +3,6 @@ import http.client
 import os, ssl
 from base64 import b64encode
 import logging
-import json
-import boto3
 
 from asserts_pylambda.LambdaMetrics import LambdaMetrics
 
@@ -25,13 +23,13 @@ class RepeatedTimer(object,metaclass=Singleton):
   def __init__(self, interval):
 
     self.metrics = LambdaMetrics()
-    json_data = self.reads3config()
-    if json_data is not None:
-      host_path= self.gethost(json_data['METRIC_STORE'])
+    self.hostname = os.environ.get('ASSERTS_METRICSTORE_HOST')
+    self.tenantname = os.environ.get('ASSERTS_TENANT_NAME')
+    self.password = os.environ.get('ASSERTS_PASSWORD')
+    if self.hostname is not None:
+      host_path= self.gethost(self.hostname)
       self.metrichost = host_path[0]
       self.metricpath = '/' + host_path[1]
-      self.tenantname = json_data['TENANT_NAME']
-      self.password = json_data['TENANT_PASSWORD']
     if self.tenantname is not None:
       self.metrics.setTenant(self.tenantname)
     self._timer = None
@@ -47,7 +45,6 @@ class RepeatedTimer(object,metaclass=Singleton):
 
   def start(self):
     if not self.is_running:
-      logger.info("Starting RepeatedTimer")
       self.next_call += self.interval
       self._timer = threading.Timer(self.next_call - time.time(), self._run)
       self._timer.start()
@@ -64,21 +61,6 @@ class RepeatedTimer(object,metaclass=Singleton):
       return split_data[1].split('/',1)
     else:
       return split_data[0].split('/',1)
-
-
-  def reads3config(self):
-    s3 = boto3.client('s3')
-    bucket = 'asserts'
-    key = 'asserts_config.json'
-
-    try:
-      data = s3.get_object(Bucket=bucket, Key=key)
-      json_data = json.load(data['Body'])
-      return json_data
-
-    except Exception as e:
-      logger.error(e)
-      raise e
 
   def publishdata(self):
     if self.tenantname is not None and self.metrichost is not None and self.password is not None:
