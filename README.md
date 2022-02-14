@@ -54,15 +54,15 @@ aws cloudformation create-stack \
 * Upload the layer zip to this bucket
 
 ```
-aws s3 cp asserts-aws-lambda-layer-js-1.zip s3://asserts-assets/asserts-aws-lambda-layer-py-1.zip
+aws s3 cp asserts-aws-lambda-layer-py-1.zip s3://asserts-assets/asserts-aws-lambda-layer-py-1.zip
 ```
 
 * Create a Layer using the S3 url
 
 ```
 aws cloudformation create-stack \
-    --stack-name asserts-aws-lambda-layer-py-1 \
-    --template-body file://$PWD/cfn-asserts-lambda-layers.yml
+    --stack-name asserts-aws-lambda-layer-py \
+    --template-body file://$PWD/cfn-asserts-lambda-layers.yml \
     --parameters ParameterKey=LayerS3Key,ParameterValue=s3://asserts-assets/asserts-aws-lambda-layer-py-1.zip
 ```
 

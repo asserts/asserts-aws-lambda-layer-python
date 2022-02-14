@@ -6,13 +6,13 @@ Parameters:
     Type: String
     Description: Layer S3 Key. For e.g. asserts-aws-lambda-layer-py-1.zip where `1` is the version of the layer
 Resources:
-  AssertsNodeJSAWSLambdaLayer:
+  AssertsNodePYAWSLambdaLayer:
     Type: AWS::Lambda::LayerVersion
     Description: >-
       Asserts AWS Lambda Layer for Python Runtime that exports resource and invocation metrics in prometheus format
       to the API endpoint /api/v1/import/prometheus on a configured host
     Properties:
-      LayerName: asserts-aws-lambda-layer-js
+      LayerName: asserts-aws-lambda-layer-py
       CompatibleRuntimes:
         - python3.8
         - python3.9
