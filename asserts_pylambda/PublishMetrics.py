@@ -24,7 +24,6 @@ class Singleton(type):
 
 class RepeatedTimer(object, metaclass=Singleton):
     def __init__(self, interval):
-
         self.metrics = LambdaMetrics()
         self.hostname = os.environ.get('ASSERTS_METRICSTORE_HOST')
         self.tenantname = os.environ.get('ASSERTS_TENANT_NAME')

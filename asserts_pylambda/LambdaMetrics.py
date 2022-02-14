@@ -41,14 +41,15 @@ class LambdaMetrics(metaclass=Singleton):
                             registry=self.registry)
         self.namespace = 'AWS-Lambda'
         self.asserts_source = 'prom-client'
-        self.instance = '10.67.7.8'  # os.uname()[1]
+        self.instance = os.uname()[1]
         self.asserts_site = self.mapRegionCode(os.environ.get('AWS_REGION'))
         self.function_name = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
         self.job = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
         self.version = os.environ.get('AWS_LAMBDA_FUNCTION_VERSION')
-        env = os.environ.get('ASSERTS_ENVIRONMENT')
-        if env is not None:
-            self.asserts_env = env
+        if os.environ.get('ASSERTS_ENVIRONMENT', ''):
+            self.asserts_env = os.environ.get('ASSERTS_ENVIRONMENT')
+        else:
+            self.asserts_env = ''
 
     def setTenant(self, tenant: str):
         self.asserts_tenant = tenant
@@ -72,8 +73,7 @@ class LambdaMetrics(metaclass=Singleton):
     def updateProcessMetrics(self):
         self.virtual_mem.labels(self.asserts_source, self.asserts_tenant, self.function_name, self.instance,
                                 self.job, self.namespace, self.asserts_site, self.asserts_env, self.tenant,
-                                self.version).set(
-            self.process_registry.get_sample_value('process_virtual_memory_bytes'))
+                                self.version).set(self.process_registry.get_sample_value('process_virtual_memory_bytes'))
         self.res_mem.labels(self.asserts_source, self.asserts_tenant, self.function_name, self.instance,
                             self.job, self.namespace, self.asserts_site, self.asserts_env, self.tenant,
                             self.version).set(self.process_registry.get_sample_value('process_resident_memory_bytes'))
@@ -94,36 +94,6 @@ class LambdaMetrics(metaclass=Singleton):
     def getMetrics(self):
         self.updateProcessMetrics()
         return generate_latest(self.registry)
-        # labels = '{' + self.createLabels() + '} '
-        # finalData = []
-        # data =  generate_latest(self.registry).decode()
-        # split_data = data.splitlines()
-        # # for d1 in split_data:
-        # #     target = str(d1)
-        # #     if target.find('#') < 0:
-        # #         finalData.append(target)
-        # finalData1 = []
-        # for d2 in split_data:
-        #     if d2.find('#') < 0 and d2.find('{') < 0 :
-        #         #d2 = d2.replace(' ', labels)
-        #         finalData1.append(d2)
-        #     else:
-        #         finalData1.append(d2)
-        # retData='\n'.join(finalData1)
-        # return retData
-
-    def createLabels(self):
-        retData = []
-        labelDataList = [self.asserts_source, self.asserts_tenant, self.function_name, self.instance,
-                         self.job, self.namespace, self.asserts_site, self.asserts_env, self.tenant, self.version]
-        i = 0
-        for d2 in self.a_labelNames:
-            retData.append(d2 + '="' + labelDataList[i] + '"')
-            i += 1
-        return ",".join(retData)
-
-    def getProcessMetrics(self):
-        return self.process.collect()
 
     def mapRegionCode(self, region: str):
         regionMapper = {

@@ -63,7 +63,7 @@ aws s3 cp asserts-aws-lambda-layer-py-1.zip s3://asserts-assets/asserts-aws-lamb
 aws cloudformation create-stack \
     --stack-name asserts-aws-lambda-layer-py \
     --template-body file://$PWD/cfn-asserts-lambda-layers.yml \
-    --parameters ParameterKey=LayerS3Key,ParameterValue=s3://asserts-assets/asserts-aws-lambda-layer-py-1.zip
+    --parameters ParameterKey=LayerS3Key,ParameterValue=asserts-aws-lambda-layer-py-1.zip
 ```
 
 * To add the layer to your function `Sample-Function`, copy the `deployment/sample-config.yml` as `config.yml`. Specify

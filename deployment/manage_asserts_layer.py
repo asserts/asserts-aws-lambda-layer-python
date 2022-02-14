@@ -71,7 +71,7 @@ def update_all_functions():
 
 def update_functions(fns):
     for fn in fns['Functions']:
-        if should_update_fn(fn):
+        if (fn['Runtime'] == 'python3.8' or fn['Runtime'] == 'python3.9') and should_update_fn(fn):
             if operation == 'add-layer':
                 add_layer(fn)
             elif operation == 'remove-layer':
