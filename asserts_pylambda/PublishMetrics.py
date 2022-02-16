@@ -5,6 +5,7 @@ from base64 import b64encode
 import logging
 
 from asserts_pylambda.LambdaMetrics import LambdaMetrics
+from asserts_pylambda.AssertsUtils import islayer_disabled
 
 logger = logging.getLogger()
 
@@ -24,6 +25,9 @@ class Singleton(type):
 
 class RepeatedTimer(object, metaclass=Singleton):
     def __init__(self, interval):
+        self.layer_disabled = islayer_disabled()
+        if self.layer_disabled:
+            return
         self.metrics = LambdaMetrics()
         self.hostname = os.environ.get('ASSERTS_METRICSTORE_HOST')
         self.tenantname = os.environ.get('ASSERTS_TENANT_NAME')
@@ -65,6 +69,8 @@ class RepeatedTimer(object, metaclass=Singleton):
             return split_data[0].split('/', 1)
 
     def publishdata(self):
+        if self.layer_disabled:
+            return
         if self.tenantname is not None and self.metrichost is not None and self.password is not None:
             logger.info("PublishMetrics data")
             conn = http.client.HTTPSConnection(self.metrichost)

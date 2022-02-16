@@ -1,0 +1,11 @@
+#!/bin/bash
+
+  # the path to the interpreter and all of the originally intended arguments
+  args=("$@")
+
+  # Store _HANDLE value into a variable and set asserts handler
+  export ORIG_HANDLER=$_HANDLER;
+  export _HANDLER="asserts_wrapper.lambda_handler";
+
+  # start the runtime
+  exec "${args[@]}"
