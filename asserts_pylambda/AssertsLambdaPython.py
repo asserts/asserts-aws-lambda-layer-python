@@ -1,8 +1,9 @@
-from os import environ
+
 import sys
 import logging
 from datetime import datetime
 from asserts_pylambda.LambdaMetrics import LambdaMetrics
+from asserts_pylambda.AssertsUtils import islayer_disabled
 
 logger = logging.getLogger()
 
@@ -49,6 +50,9 @@ def _wrap_handler(handler):
 
 class AssertsLambdaPython():
     def __init__(self):
+        layer_disabled = islayer_disabled()
+        if layer_disabled:
+            return
         lambda_bootstrap = get_lambda_bootstrap()
         if not lambda_bootstrap:
             logger.warning(

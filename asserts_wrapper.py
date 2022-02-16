@@ -16,8 +16,8 @@ class HandlerError(Exception):
 
 
 logger.info("lambda_handler set to new handler")
-asserts = AssertsLambdaPython()
-rt = RepeatedTimer(15)
+AssertsLambdaPython()
+RepeatedTimer(15)
 
 path = os.environ.get("ORIG_HANDLER")
 
