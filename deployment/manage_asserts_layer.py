@@ -39,6 +39,7 @@ if operation == 'add-layer' and layer_arn is None:
     raise ()
 
 variables = {
+    'AWS_LAMBDA_EXEC_WRAPPER': '/opt/asserts-wrapper'
 }
 host = 'ASSERTS_METRICSTORE_HOST'
 tenant_name = 'ASSERTS_TENANT_NAME'
