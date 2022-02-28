@@ -10,6 +10,7 @@ ASSERTS_METRICSTORE_HOST: https://chief.tsdb.dev.asserts.ai/api/v1/import/promet
 # ASSERTS_TENANT and ASSERTS_PASSWORD are optional
 ASSERTS_TENANT_NAME: chief
 ASSERTS_PASSWORD: wrong
+ASSERTS_ENVIRONMENT: dev
 
 # Functions can be specified either through a regex pattern or through a list of function names
 # function_name_pattern: Sample.+

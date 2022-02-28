@@ -44,6 +44,7 @@ variables = {
 host = 'ASSERTS_METRICSTORE_HOST'
 tenant_name = 'ASSERTS_TENANT_NAME'
 password = 'ASSERTS_PASSWORD'
+env = 'ASSERTS_ENVIRONMENT'
 
 if operation in 'add-layer' and config.get(host) is None:
     print("Config file 'config.yml' is invalid. '" + host + "' is not specified")
@@ -55,6 +56,8 @@ if config.get(tenant_name) is not None:
     variables['ASSERTS_TENANT_NAME'] = config[tenant_name]
 if config.get(password) is not None:
     variables['ASSERTS_PASSWORD'] = config[password]
+if config.get(env) is not None:
+    variables['ASSERTS_ENVIRONMENT'] = config[env]
 
 
 def update_all_functions():
@@ -103,6 +106,7 @@ def remove_layer(fn):
         asserts_properties = list(filter(lambda _key: 'ASSERTS_' in _key, current_variables.keys()))
         for key in asserts_properties:
             current_variables.pop(key)
+        current_variables.pop('AWS_LAMBDA_EXEC_WRAPPER')
         update_fn(fn, {'Variables': current_variables}, layers)
 
 
