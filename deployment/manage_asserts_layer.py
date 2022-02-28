@@ -44,7 +44,7 @@ variables = {
 host = 'ASSERTS_METRICSTORE_HOST'
 tenant_name = 'ASSERTS_TENANT_NAME'
 password = 'ASSERTS_PASSWORD'
-env = 'ASSERTS_ENV'
+env = 'ASSERTS_ENVIRONMENT'
 
 if operation in 'add-layer' and config.get(host) is None:
     print("Config file 'config.yml' is invalid. '" + host + "' is not specified")
