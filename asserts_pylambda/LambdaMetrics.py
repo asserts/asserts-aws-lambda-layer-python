@@ -42,7 +42,7 @@ class LambdaMetrics(metaclass=Singleton):
         self.namespace = 'AWS-Lambda'
         self.asserts_source = 'prom-client'
         self.instance = os.uname()[1]
-        self.asserts_site = self.mapRegionCode(os.environ.get('AWS_REGION'))
+
         self.function_name = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
         self.job = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
         self.version = os.environ.get('AWS_LAMBDA_FUNCTION_VERSION')
@@ -51,9 +51,10 @@ class LambdaMetrics(metaclass=Singleton):
         else:
             self.asserts_env = ''
 
-    def setTenant(self, tenant: str):
-        self.asserts_tenant = tenant
-        self.tenant = tenant
+        if os.environ.get('ASSERTS_SITE', ''):
+            self.asserts_site = os.environ.get('ASSERTS_SITE')
+        else:
+            self.asserts_site = ''
 
     def recordInvocation(self):
         self.invocations.labels(self.asserts_source, self.asserts_tenant, self.function_name, self.instance,
@@ -73,7 +74,8 @@ class LambdaMetrics(metaclass=Singleton):
     def updateProcessMetrics(self):
         self.virtual_mem.labels(self.asserts_source, self.asserts_tenant, self.function_name, self.instance,
                                 self.job, self.namespace, self.asserts_site, self.asserts_env, self.tenant,
-                                self.version).set(self.process_registry.get_sample_value('process_virtual_memory_bytes'))
+                                self.version).set(
+            self.process_registry.get_sample_value('process_virtual_memory_bytes'))
         self.res_mem.labels(self.asserts_source, self.asserts_tenant, self.function_name, self.instance,
                             self.job, self.namespace, self.asserts_site, self.asserts_env, self.tenant,
                             self.version).set(self.process_registry.get_sample_value('process_resident_memory_bytes'))
@@ -94,12 +96,3 @@ class LambdaMetrics(metaclass=Singleton):
     def getMetrics(self):
         self.updateProcessMetrics()
         return generate_latest(self.registry)
-
-    def mapRegionCode(self, region: str):
-        regionMapper = {
-            'uswest1': 'us-west-1',
-            'uswest2': 'us-west-2',
-            'useast1': 'us-east-1',
-            'useast2': 'us-east-2'
-        }
-        return regionMapper.get(region, region)
