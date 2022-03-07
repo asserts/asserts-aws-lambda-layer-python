@@ -36,8 +36,6 @@ class RepeatedTimer(object, metaclass=Singleton):
             host_path = self.gethost(self.hostname)
             self.metrichost = host_path[0]
             self.metricpath = '/' + host_path[1]
-        if self.tenantname is not None:
-            self.metrics.setTenant(self.tenantname)
         self._timer = None
         self.interval = interval
         self.is_running = False
@@ -71,14 +69,16 @@ class RepeatedTimer(object, metaclass=Singleton):
     def publishdata(self):
         if self.layer_disabled:
             return
-        if self.tenantname is not None and self.metrichost is not None and self.password is not None:
+        if self.metrichost is not None:
             logger.info("PublishMetrics data")
             conn = http.client.HTTPSConnection(self.metrichost)
             path = self.metricpath
-            headers = {'Content-type': 'text/plain',
-                       "Authorization": "Basic {}".format(
-                           b64encode(bytes(f"{self.tenantname}:{self.password}", "utf-8")).decode("ascii"))
-                       }
+
+            headers = {'Content-type': 'text/plain'}
+            if self.password is not None:
+                headers['Authorization'] = "Basic {}".format(
+                    b64encode(bytes(f"{self.tenantname}:{self.password}", "utf-8")).decode("ascii"))
+
             body = self.metrics.getMetrics
             conn.request('POST', path, body, headers)
             response = conn.getresponse()

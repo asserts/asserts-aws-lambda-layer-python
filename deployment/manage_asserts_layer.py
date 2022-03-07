@@ -45,6 +45,7 @@ host = 'ASSERTS_METRICSTORE_HOST'
 tenant_name = 'ASSERTS_TENANT_NAME'
 password = 'ASSERTS_PASSWORD'
 env = 'ASSERTS_ENVIRONMENT'
+site = 'ASSERTS_SITE'
 
 if operation in 'add-layer' and config.get(host) is None:
     print("Config file 'config.yml' is invalid. '" + host + "' is not specified")
@@ -58,6 +59,8 @@ if config.get(password) is not None:
     variables['ASSERTS_PASSWORD'] = config[password]
 if config.get(env) is not None:
     variables['ASSERTS_ENVIRONMENT'] = config[env]
+if config.get(site) is not None:
+    variables['ASSERTS_SITE'] = config[site]
 
 
 def update_all_functions():
