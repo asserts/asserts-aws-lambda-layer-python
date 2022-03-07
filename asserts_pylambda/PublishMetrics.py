@@ -77,7 +77,7 @@ class RepeatedTimer(object, metaclass=Singleton):
             headers = {'Content-type': 'text/plain'}
             if self.password is not None:
                 headers['Authorization'] = "Basic {}".format(
-                               b64encode(bytes(f"{self.tenantname}:{self.password}", "utf-8")).decode("ascii"))
+                    b64encode(bytes(f"{self.tenantname}:{self.password}", "utf-8")).decode("ascii"))
 
             body = self.metrics.getMetrics
             conn.request('POST', path, body, headers)
