@@ -25,6 +25,7 @@ The following environment variables will have to be defined regardless of whethe
 |Variable name| Description|
 |-------------|------------|
 |`ASSERTS_METRICSTORE_HOST`|An endpoint which can receive the `POST` method call on api `/api/v1/import/prometheus`. This can either be an asserts cloud endpoint or an end point exposed on the EC2 or ECS instance where [Asserts AWS Exporter](https://app.gitbook.com/o/-Mih12_HEHZ0gGyaqQ0X/s/-Mih17ZSkwF7P2VxUo4u/quickstart-guide/setting-up-aws-serverless-monitoring) is deployed |
+|`ASSERTS_METRICSTORE_PORT`| The metric store listen port. Defaults to `443`. To switch to http protocol, just specify a port different from `443`. For e.g. `80` |
 |`ASSERTS_TENANT_NAME`|The tenant name in the Asserts Cloud where the metrics will be ingested |
 |`ASSERTS_PASSWORD`|If the endpoint supports and expects Basic authorization the credentials can be configured here |
 |`ASSERTS_LAYER_DISABLED`| If set to `true`, the layer will be disabled|
