@@ -30,12 +30,18 @@ class RepeatedTimer(object, metaclass=Singleton):
             return
         self.metrics = LambdaMetrics()
         self.hostname = os.environ.get('ASSERTS_METRICSTORE_HOST')
+        self.port = os.environ.get('ASSERTS_METRICSTORE_PORT')
         self.tenantname = os.environ.get('ASSERTS_TENANT_NAME')
         self.password = os.environ.get('ASSERTS_PASSWORD')
+
         if self.hostname is not None:
             host_path = self.gethost(self.hostname)
             self.metrichost = host_path[0]
             self.metricpath = '/' + host_path[1]
+
+        if self.port is None:
+            self.port = 443
+
         self._timer = None
         self.interval = interval
         self.is_running = False
@@ -71,7 +77,11 @@ class RepeatedTimer(object, metaclass=Singleton):
             return
         if self.metrichost is not None:
             logger.info("PublishMetrics data")
-            conn = http.client.HTTPSConnection(self.metrichost)
+            if self.port is 443:
+                conn = http.client.HTTPSConnection(self.metrichost)
+            else:
+                conn = http.client.HTTPConnection(self.metrichost, self.port)
+
             path = self.metricpath
 
             headers = {'Content-type': 'text/plain'}
