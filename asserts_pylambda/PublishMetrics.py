@@ -77,7 +77,7 @@ class RepeatedTimer(object, metaclass=Singleton):
             return
         if self.metrichost is not None:
             logger.info("PublishMetrics data")
-            if self.port is 443:
+            if self.port == 443:
                 conn = http.client.HTTPSConnection(self.metrichost)
             else:
                 conn = http.client.HTTPConnection(self.metrichost, self.port)
