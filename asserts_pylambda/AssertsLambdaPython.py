@@ -3,7 +3,7 @@ import sys
 import logging
 from datetime import datetime
 from asserts_pylambda.LambdaMetrics import LambdaMetrics
-from asserts_pylambda.AssertsUtils import islayer_disabled
+from asserts_pylambda.AssertsUtils import is_layer_disabled
 
 logger = logging.getLogger()
 
@@ -33,7 +33,7 @@ def _wrap_handler(handler):
         error_raised = False
         try:
             start_time = datetime.now()
-            metrics.recordInvocation()
+            metrics.record_invocation()
             return handler(aws_event, aws_context, *args, **kwargs)
         except Exception:
             exc_info = sys.exc_info()
@@ -41,16 +41,16 @@ def _wrap_handler(handler):
             reraise(*exc_info)
         finally:
             if error_raised:
-                metrics.recordError()
+                metrics.record_error()
             diff_time = datetime.now() - start_time
-            metrics.recordLatency(diff_time.total_seconds())
+            metrics.record_latency(diff_time.total_seconds())
 
     return asserts_handler
 
 
 class AssertsLambdaPython():
     def __init__(self):
-        layer_disabled = islayer_disabled()
+        layer_disabled = is_layer_disabled()
         if layer_disabled:
             return
         lambda_bootstrap = get_lambda_bootstrap()

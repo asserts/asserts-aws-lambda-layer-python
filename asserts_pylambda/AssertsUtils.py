@@ -1,7 +1,7 @@
 import os
 
 
-def islayer_disabled():
+def is_layer_disabled():
     valid = {'true': True, 'false': False, }
     layer_disabled = False
     value = os.environ.get('ASSERTS_LAYER_DISABLED')
