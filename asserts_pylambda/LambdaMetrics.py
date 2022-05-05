@@ -13,7 +13,8 @@ class Singleton(type):
 
 
 class LambdaMetrics(metaclass=Singleton):
-    a_labelNames = ['asserts_source', 'function_name', 'instance', 'job', 'namespace', 'asserts_site',
+    a_labelNames = ['account_id', 'region', 'asserts_source', 'function_name', 'instance', 'job',
+                    'namespace', 'asserts_site',
                     'asserts_env', 'version']
 
     def __init__(self):
@@ -39,60 +40,62 @@ class LambdaMetrics(metaclass=Singleton):
                              registry=self.registry)
         self.max_fd = Gauge('process_max_fds', 'Maximum number of open file descriptors', labelnames=self.a_labelNames,
                             registry=self.registry)
-        self.namespace = 'AWS-Lambda'
+        self.namespace = 'AWS/Lambda'
         self.asserts_source = 'prom-client'
         self.instance = os.uname()[1]
 
         self.function_name = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
         self.job = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
         self.version = os.environ.get('AWS_LAMBDA_FUNCTION_VERSION')
-        if os.environ.get('ASSERTS_ENVIRONMENT', ''):
+        self.account_id = os.environ.get('ACCOUNT_ID')
+        self.region = os.environ.get('AWS_REGION')
+        if os.environ.get('ASSERTS_ENVIRONMENT') is not None:
             self.asserts_env = os.environ.get('ASSERTS_ENVIRONMENT')
         else:
-            self.asserts_env = ''
+            self.asserts_env = self.account_id
 
-        if os.environ.get('ASSERTS_SITE', ''):
+        if os.environ.get('ASSERTS_SITE') is not None:
             self.asserts_site = os.environ.get('ASSERTS_SITE')
         else:
-            self.asserts_site = ''
+            self.asserts_site = self.region
 
-    def recordInvocation(self):
-        self.invocations.labels(self.asserts_source, self.function_name, self.instance,
+    def record_invocation(self):
+        self.invocations.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                                 self.job, self.namespace, self.asserts_site, self.asserts_env,
                                 self.version).inc()
 
-    def recordError(self):
-        self.errors.labels(self.asserts_source, self.function_name, self.instance,
+    def record_error(self):
+        self.errors.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                            self.job, self.namespace, self.asserts_site, self.asserts_env,
                            self.version).inc()
 
-    def recordLatency(self, latency: float):
-        self.latency.labels(self.asserts_source, self.function_name, self.instance,
+    def record_latency(self, latency: float):
+        self.latency.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                             self.job, self.namespace, self.asserts_site, self.asserts_env,
                             self.version).observe(latency)
 
-    def updateProcessMetrics(self):
-        self.virtual_mem.labels(self.asserts_source, self.function_name, self.instance,
+    def update_process_metrics(self):
+        self.virtual_mem.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                                 self.job, self.namespace, self.asserts_site, self.asserts_env,
                                 self.version).set(
             self.process_registry.get_sample_value('process_virtual_memory_bytes'))
-        self.res_mem.labels(self.asserts_source, self.function_name, self.instance,
+        self.res_mem.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                             self.job, self.namespace, self.asserts_site, self.asserts_env,
                             self.version).set(self.process_registry.get_sample_value('process_resident_memory_bytes'))
-        self.start_time.labels(self.asserts_source, self.function_name, self.instance,
+        self.start_time.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                                self.job, self.namespace, self.asserts_site, self.asserts_env,
                                self.version).set(self.process_registry.get_sample_value('process_start_time_seconds'))
-        self.open_fd.labels(self.asserts_source, self.function_name, self.instance,
+        self.open_fd.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                             self.job, self.namespace, self.asserts_site, self.asserts_env,
                             self.version).set(self.process_registry.get_sample_value('process_open_fds'))
-        self.max_fd.labels(self.asserts_source, self.function_name, self.instance,
+        self.max_fd.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                            self.job, self.namespace, self.asserts_site, self.asserts_env,
                            self.version).set(self.process_registry.get_sample_value('process_max_fds'))
-        self.cpu_seconds.labels(self.asserts_source, self.function_name, self.instance,
+        self.cpu_seconds.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                                 self.job, self.namespace, self.asserts_site, self.asserts_env,
                                 self.version).inc(self.process_registry.get_sample_value('process_cpu_seconds_total'))
 
     @property
-    def getMetrics(self):
-        self.updateProcessMetrics()
+    def get_metrics(self):
+        self.update_process_metrics()
         return generate_latest(self.registry)

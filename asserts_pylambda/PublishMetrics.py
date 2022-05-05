@@ -5,7 +5,7 @@ from base64 import b64encode
 import logging
 
 from asserts_pylambda.LambdaMetrics import LambdaMetrics
-from asserts_pylambda.AssertsUtils import islayer_disabled
+from asserts_pylambda.AssertsUtils import is_layer_disabled
 
 logger = logging.getLogger()
 
@@ -25,7 +25,7 @@ class Singleton(type):
 
 class RepeatedTimer(object, metaclass=Singleton):
     def __init__(self, interval):
-        self.layer_disabled = islayer_disabled()
+        self.layer_disabled = is_layer_disabled()
         if self.layer_disabled:
             return
         self.metrics = LambdaMetrics()
@@ -35,7 +35,7 @@ class RepeatedTimer(object, metaclass=Singleton):
         self.password = os.environ.get('ASSERTS_PASSWORD')
 
         if self.hostname is not None:
-            host_path = self.gethost(self.hostname)
+            host_path = self.get_host(self.hostname)
             self.metrichost = host_path[0]
             self.metricpath = '/' + host_path[1]
 
@@ -51,7 +51,7 @@ class RepeatedTimer(object, metaclass=Singleton):
     def _run(self):
         self.is_running = False
         self.start()
-        self.publishdata()
+        self.publish_metrics()
 
     def start(self):
         if not self.is_running:
@@ -64,7 +64,7 @@ class RepeatedTimer(object, metaclass=Singleton):
         self._timer.cancel()
         self.is_running = False
 
-    def gethost(self, url):
+    def get_host(self, url):
         store_url = str(url)
         split_data = store_url.split('//', 2)
         if len(split_data) == 2:
@@ -72,7 +72,7 @@ class RepeatedTimer(object, metaclass=Singleton):
         else:
             return split_data[0].split('/', 1)
 
-    def publishdata(self):
+    def publish_metrics(self):
         if self.layer_disabled:
             return
         if self.metrichost is not None:
@@ -89,7 +89,7 @@ class RepeatedTimer(object, metaclass=Singleton):
                 headers['Authorization'] = "Basic {}".format(
                     b64encode(bytes(f"{self.tenantname}:{self.password}", "utf-8")).decode("ascii"))
 
-            body = self.metrics.getMetrics
+            body = self.metrics.get_metrics
             conn.request('POST', path, body, headers)
             response = conn.getresponse()
             code = response.getcode()
