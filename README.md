@@ -44,21 +44,13 @@ In addition to the above metrics, the process metrics collected by [client_pytho
 
 To create a layer from the zip -
 
-* Create a s3 bucket as follows
+* Upload the layer zip to a s3 bucket
 
 ```
-aws cloudformation create-stack \
-    --stack-name asserts-assets-s3-bucket \
-    --template-body file://$PWD/deployment/cfn-asserts-assets-s3bucket.yml
+aws s3 cp asserts-aws-lambda-layer-py-1.zip s3://my-bucket/asserts-aws-lambda-layer-py-1.zip
 ```
 
-* Upload the layer zip to this bucket
-
-```
-aws s3 cp asserts-aws-lambda-layer-py-1.zip s3://asserts-assets/asserts-aws-lambda-layer-py-1.zip
-```
-
-* Create a Layer using the S3 url
+* Create a layer using the S3 url
 
 ```
 aws cloudformation create-stack \
