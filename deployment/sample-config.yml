@@ -1,8 +1,8 @@
 # Supported operations are 'add-layer', 'update-version', 'update-env-variables', 'disable', 'enable'
 operation: add-layer
 
-# Layer arn needs to be specified for 'add' or 'update-version' operations
-layer_arn: arn:aws:lambda:us-west-2:342994379019:layer:asserts-aws-lambda-layer-py:3
+# Layer arn needs to be specified for 'add-layer' or 'update-version' operations
+layer_arn: arn:aws:lambda:us-west-2:689200961921:layer:asserts-aws-lambda-layer-python:1
 
 # ASSERTS_METRICSTORE_HOST is required for 'add' operation
 ASSERTS_METRICSTORE_HOST: https://chief.tsdb.dev.asserts.ai/api/v1/import/prometheus
