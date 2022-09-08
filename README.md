@@ -32,35 +32,12 @@ The following environment variables will have to be defined regardless of whethe
 
 # Exported Metrics
 
-The following metrics are exported by this layer
+The process metrics collected by [client_python](https://github.com/prometheus/client_python) are automatically exported.
 
-|Metric Name|Metric Type|Description|
-|-----------|------|-----|
-|`aws_lambda_invocations_total`| `Counter` | The count of invocations on this Lambda instance |
-|`aws_lambda_errors_total`| `Counter` | The count of invocations on this Lambda instance that resulted in an error |
-|`aws_lambda_duration_seconds`| `Histogram` | A histogram of the duration of the invocations  |
 
-In addition to the above metrics, the process metrics collected by [client_python](https://github.com/prometheus/client_python) are also exported.
-
-To create a layer from the zip -
-
-* Upload the layer zip to a s3 bucket
-
-```
-aws s3 cp asserts-aws-lambda-layer-py-1.zip s3://my-bucket/asserts-aws-lambda-layer-py-1.zip
-```
-
-* Create a layer using the S3 url
-
-```
-aws cloudformation create-stack \
-    --stack-name asserts-aws-lambda-layer-py \
-    --template-body file://$PWD/cfn-asserts-lambda-layers.yml \
-    --parameters ParameterKey=LayerS3Key,ParameterValue=asserts-aws-lambda-layer-py-1.zip
-```
-
-* To add the layer to your function `Sample-Function`, copy the `deployment/sample-config.yml` as `config.yml`. Specify
-  the function name and layer ARN and other environment properties and run the `manage_asserts_layer` script
+# Add layer to Lambda function
+To add the layer to your function `Sample-Function`, copy the `deployment/sample-config.yml` as `config.yml`. Specify
+the function name and layer ARN and other environment properties and run the `manage_asserts_layer` script
 
 
 ```
