@@ -30,21 +30,12 @@ def _wrap_handler(handler):
     def asserts_handler(aws_event, aws_context, *args, **kwargs):
         # type: (Any, Any, *Any, **Any) -> Any
         metrics = LambdaMetrics()
-        error_raised = False
         try:
             start_time = datetime.now()
-            metrics.record_invocation()
             return handler(aws_event, aws_context, *args, **kwargs)
         except Exception:
             exc_info = sys.exc_info()
-            error_raised = True
             reraise(*exc_info)
-        finally:
-            if error_raised:
-                metrics.record_error()
-            diff_time = datetime.now() - start_time
-            metrics.record_latency(diff_time.total_seconds())
-
     return asserts_handler
 
 
