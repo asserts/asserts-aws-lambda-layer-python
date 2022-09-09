@@ -1,3 +1,4 @@
-boto3==1.17.58
+botocore==1.27.67
+boto3==1.24.67
 prometheus_client==0.0.9
 PyYAML==6.0

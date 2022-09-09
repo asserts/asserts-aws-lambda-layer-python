@@ -46,6 +46,9 @@ class RepeatedTimer(object, metaclass=Singleton):
         self.interval = interval
         self.is_running = False
         self.next_call = time.time()
+
+        # Publish metrics once to capture cold start before request processing
+        self.publish_metrics()
         self.start()
 
     def _run(self):
@@ -97,3 +100,8 @@ class RepeatedTimer(object, metaclass=Singleton):
                 logger.info('Unable to send metrics %d', code)
             else:
                 logger.info('Metrics Published successfully')
+
+        # Update cold start status
+        if self.metrics.is_cold_start is True:
+            self.metrics.is_cold_start = False
+
