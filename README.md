@@ -45,7 +45,7 @@ the function name and layer ARN and other environment properties and run the `ma
 operation: add-layer
 
 # Layer arn needs to be specified for 'add' or 'update-version' operations
-layer_arn: arn:aws:lambda:us-west-2:689200961921:layer:asserts-aws-lambda-layer-python:1
+layer_arn: arn:aws:lambda:us-west-2:689200961921:layer:asserts-aws-lambda-layer-python:8
 
 # ASSERTS_METRICSTORE_HOST
 ASSERTS_METRICSTORE_HOST: https://chief.tsdb.dev.asserts.ai/api/v1/import/prometheus
