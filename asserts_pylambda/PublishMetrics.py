@@ -6,7 +6,7 @@ import logging
 import requests
 
 from asserts_pylambda.LambdaMetrics import LambdaMetrics
-from asserts_pylambda.AssertsUtils import islayer_disabled
+from asserts_pylambda.AssertsUtils import is_layer_disabled
 
 logger = logging.getLogger()
 
@@ -26,7 +26,7 @@ class Singleton(type):
 
 class RepeatedTimer(object, metaclass=Singleton):
     def __init__(self, interval):
-        self.layer_disabled = islayer_disabled()
+        self.layer_disabled = is_layer_disabled()
         if self.layer_disabled:
             return
         self.metrics = LambdaMetrics()
@@ -38,12 +38,15 @@ class RepeatedTimer(object, metaclass=Singleton):
         self.interval = interval
         self.is_running = False
         self.next_call = time.time()
+
+        # Publish metrics once to capture cold start before request processing
+        self.publish_metrics()
         self.start()
 
     def _run(self):
         self.is_running = False
         self.start()
-        self.publishdata()
+        self.publish_metrics()
 
     def start(self):
         if not self.is_running:
@@ -56,15 +59,7 @@ class RepeatedTimer(object, metaclass=Singleton):
         self._timer.cancel()
         self.is_running = False
 
-    def gethost(self, url):
-        store_url = str(url)
-        split_data = store_url.split('//', 2)
-        if len(split_data) == 2:
-            return split_data[1].split('/', 1)
-        else:
-            return split_data[0].split('/', 1)
-
-    def publishdata(self):
+    def publish_metrics(self):
         if self.layer_disabled:
             return
         if self.hostname is not None:
@@ -79,3 +74,8 @@ class RepeatedTimer(object, metaclass=Singleton):
                 logger.info('Unable to send metrics %d', response.status_code)
             else:
                 logger.info('Metrics Published successfully')
+
+        # Update cold start status
+        if self.metrics.is_cold_start is True:
+            self.metrics.is_cold_start = False
+

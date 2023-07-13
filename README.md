@@ -24,7 +24,7 @@ The following environment variables will have to be defined regardless of whethe
 
 |Variable name| Description|
 |-------------|------------|
-|`ASSERTS_METRICSTORE_HOST`|An endpoint which can receive the `POST` method call on api `/api/v1/import/prometheus`. This can either be an asserts cloud endpoint or an end point exposed on the EC2 or ECS instance where [Asserts AWS Exporter](https://app.gitbook.com/o/-Mih12_HEHZ0gGyaqQ0X/s/-Mih17ZSkwF7P2VxUo4u/quickstart-guide/setting-up-aws-serverless-monitoring) is deployed |
+|`ASSERTS_METRICSTORE_HOST`|An endpoint which can receive the `POST` method call on api `/api/v1/import/prometheus`. This can either be an asserts cloud endpoint or an end point exposed on the EC2 or ECS instance where [Asserts AWS Exporter](https://docs.asserts.ai/user-guide/integrations/aws) is deployed or [Victoria Metrics](https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-import-data-in-prometheus-exposition-format) ingestion end point|
 |`ASSERTS_METRICSTORE_PORT`| The metric store listen port. Defaults to `443`. To switch to http protocol, just specify a port different from `443`. For e.g. `80` |
 |`ASSERTS_TENANT_NAME`|The tenant name in the Asserts Cloud where the metrics will be ingested |
 |`ASSERTS_PASSWORD`|If the endpoint supports and expects Basic authorization the credentials can be configured here |
@@ -32,43 +32,12 @@ The following environment variables will have to be defined regardless of whethe
 
 # Exported Metrics
 
-The following metrics are exported by this layer
+The process metrics collected by [client_python](https://github.com/prometheus/client_python) are automatically exported.
 
-|Metric Name|Metric Type|Description|
-|-----------|------|-----|
-|`aws_lambda_invocations_total`| `Counter` | The count of invocations on this Lambda instance |
-|`aws_lambda_errors_total`| `Counter` | The count of invocations on this Lambda instance that resulted in an error |
-|`aws_lambda_duration_seconds`| `Histogram` | A histogram of the duration of the invocations  |
 
-In addition to the above metrics, the process metrics collected by [client_python](https://github.com/prometheus/client_python) are also exported.
-
-To create a layer from the zip -
-
-* Create a s3 bucket as follows
-
-```
-aws cloudformation create-stack \
-    --stack-name asserts-assets-s3-bucket \
-    --template-body file://$PWD/deployment/cfn-asserts-assets-s3bucket.yml
-```
-
-* Upload the layer zip to this bucket
-
-```
-aws s3 cp asserts-aws-lambda-layer-py-1.zip s3://asserts-assets/asserts-aws-lambda-layer-py-1.zip
-```
-
-* Create a Layer using the S3 url
-
-```
-aws cloudformation create-stack \
-    --stack-name asserts-aws-lambda-layer-py \
-    --template-body file://$PWD/cfn-asserts-lambda-layers.yml \
-    --parameters ParameterKey=LayerS3Key,ParameterValue=asserts-aws-lambda-layer-py-1.zip
-```
-
-* To add the layer to your function `Sample-Function`, copy the `deployment/sample-config.yml` as `config.yml`. Specify
-  the function name and layer ARN and other environment properties and run the `manage_asserts_layer` script
+# Add layer to Lambda function
+To add the layer to your function `Sample-Function`, copy the `deployment/sample-config.yml` as `config.yml`. Specify
+the function name and layer ARN and other environment properties and run the `manage_asserts_layer` script
 
 
 ```
@@ -76,7 +45,7 @@ aws cloudformation create-stack \
 operation: add-layer
 
 # Layer arn needs to be specified for 'add' or 'update-version' operations
-layer_arn: arn:aws:lambda:us-west-2:342994379019:layer:asserts-aws-lambda-layer-py:3
+layer_arn: arn:aws:lambda:us-west-2:689200961921:layer:asserts-aws-lambda-layer-python:8
 
 # ASSERTS_METRICSTORE_HOST
 ASSERTS_METRICSTORE_HOST: https://chief.tsdb.dev.asserts.ai/api/v1/import/prometheus

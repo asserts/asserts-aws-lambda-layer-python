@@ -5,6 +5,9 @@ import yaml
 # Get the Lambda Client
 lambda_client = boto3.client('lambda')
 
+# Get the sts Client
+sts_client = boto3.client('sts')
+
 file = open('config.yml', 'r')
 config = yaml.safe_load(file)
 if config is None:
@@ -64,6 +67,9 @@ if config.get(env) is not None:
     variables['ASSERTS_ENVIRONMENT'] = config[env]
 if config.get(site) is not None:
     variables['ASSERTS_SITE'] = config[site]
+
+caller_identity = sts_client.get_caller_identity()
+variables['ACCOUNT_ID'] = caller_identity.get('Account')
 
 
 def update_all_functions():
@@ -186,9 +192,20 @@ def update_fn(fn, _env, layers):
 
 
 def merge_variables(_env, fn):
+    provided_vars = list(variables.keys())  
+    provided_vars.sort()
     _variables = fn['Environment']['Variables']
+    current_vars = list(_variables.keys())
+    current_vars.sort()
     _variables.update(variables)
-    _env['Variables'] = _variables
+    print('Current  : ' + ', '.join(current_vars))
+    print('Provided : ' + ', '.join(provided_vars))
+    for var in ['ASSERTS_ENVIRONMENT', 'ASSERTS_SITE', 'ASSERTS_METRICSTORE_PORT']:
+        if var in current_vars and var not in provided_vars:
+            _variables.pop(var)
+    updated_vars = list(_variables.keys())
+    updated_vars.sort()
+    print('Final    : ' + ', '.join(updated_vars))
 
 
 def get_asserts_layer(fn):
