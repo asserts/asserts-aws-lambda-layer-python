@@ -64,7 +64,7 @@ class RepeatedTimer(object, metaclass=Singleton):
             return
         if self.hostname is not None:
             logger.info("PublishMetrics data")
-            body = self.metrics.getMetrics
+            body = self.metrics.get_metrics
             headers = {'Content-type': 'text/plain'}
             if self.password is not None:
                 headers['Authorization'] = "Basic {}".format(
