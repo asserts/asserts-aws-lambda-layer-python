@@ -3,6 +3,7 @@ import os
 from importlib import import_module
 from asserts_pylambda.AssertsLambdaPython import AssertsLambdaPython
 from asserts_pylambda.PublishMetrics import RepeatedTimer
+from opentelemetry.instrumentation.aws_lambda import AwsLambdaInstrumentor
 
 logger = logging.getLogger()
 
@@ -14,6 +15,7 @@ def modify_module_name(module_name):
 class HandlerError(Exception):
     pass
 
+AwsLambdaInstrumentor().instrument()
 
 logger.info("lambda_handler set to new handler")
 AssertsLambdaPython()

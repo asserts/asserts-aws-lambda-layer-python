@@ -3,6 +3,7 @@ import http.client
 import os, ssl
 from base64 import b64encode
 import logging
+import requests
 
 from asserts_pylambda.LambdaMetrics import LambdaMetrics
 from asserts_pylambda.AssertsUtils import is_layer_disabled
@@ -30,17 +31,8 @@ class RepeatedTimer(object, metaclass=Singleton):
             return
         self.metrics = LambdaMetrics()
         self.hostname = os.environ.get('ASSERTS_METRICSTORE_HOST')
-        self.port = os.environ.get('ASSERTS_METRICSTORE_PORT')
         self.tenantname = os.environ.get('ASSERTS_TENANT_NAME')
         self.password = os.environ.get('ASSERTS_PASSWORD')
-
-        if self.hostname is not None:
-            host_path = self.get_host(self.hostname)
-            self.metrichost = host_path[0]
-            self.metricpath = '/' + host_path[1]
-
-        if self.port is None:
-            self.port = 443
 
         self._timer = None
         self.interval = interval
@@ -67,37 +59,19 @@ class RepeatedTimer(object, metaclass=Singleton):
         self._timer.cancel()
         self.is_running = False
 
-    def get_host(self, url):
-        store_url = str(url)
-        split_data = store_url.split('//', 2)
-        if len(split_data) == 2:
-            return split_data[1].split('/', 1)
-        else:
-            return split_data[0].split('/', 1)
-
     def publish_metrics(self):
         if self.layer_disabled:
             return
-        if self.metrichost is not None:
+        if self.hostname is not None:
             logger.info("PublishMetrics data")
-            if self.port == 443:
-                conn = http.client.HTTPSConnection(self.metrichost)
-            else:
-                conn = http.client.HTTPConnection(self.metrichost, self.port)
-
-            path = self.metricpath
-
+            body = self.metrics.get_metrics
             headers = {'Content-type': 'text/plain'}
             if self.password is not None:
                 headers['Authorization'] = "Basic {}".format(
                     b64encode(bytes(f"{self.tenantname}:{self.password}", "utf-8")).decode("ascii"))
-
-            body = self.metrics.get_metrics
-            conn.request('POST', path, body, headers)
-            response = conn.getresponse()
-            code = response.getcode()
-            if code != http.HTTPStatus.OK:
-                logger.info('Unable to send metrics %d', code)
+            response = requests.post(self.hostname, headers=headers, data=body)
+            if response.status_code != http.HTTPStatus.OK and response.status_code != http.HTTPStatus.NO_CONTENT:
+                logger.info('Unable to send metrics %d', response.status_code)
             else:
                 logger.info('Metrics Published successfully')
 
