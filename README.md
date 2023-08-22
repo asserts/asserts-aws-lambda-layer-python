@@ -24,8 +24,7 @@ The following environment variables will have to be defined regardless of whethe
 
 |Variable name| Description|
 |-------------|------------|
-|`ASSERTS_METRICSTORE_HOST`|An endpoint which can receive the `POST` method call on api `/api/v1/import/prometheus`. This can either be an asserts cloud endpoint or an end point exposed on the EC2 or ECS instance where [Asserts AWS Exporter](https://docs.asserts.ai/user-guide/integrations/aws) is deployed or [Victoria Metrics](https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-import-data-in-prometheus-exposition-format) ingestion end point|
-|`ASSERTS_METRICSTORE_PORT`| The metric store listen port. Defaults to `443`. To switch to http protocol, just specify a port different from `443`. For e.g. `80` |
+|`ASSERTS_METRIC_ENDPOINT`|An endpoint which can receive the `POST` method call on api `/api/v1/import/prometheus`. This can either be an asserts cloud endpoint or an end point exposed on the EC2 or ECS instance where [Asserts AWS Exporter](https://docs.asserts.ai/user-guide/integrations/aws) is deployed or [Victoria Metrics](https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-import-data-in-prometheus-exposition-format) ingestion end point|
 |`ASSERTS_TENANT_NAME`|The tenant name in the Asserts Cloud where the metrics will be ingested |
 |`ASSERTS_PASSWORD`|If the endpoint supports and expects Basic authorization the credentials can be configured here |
 |`ASSERTS_LAYER_DISABLED`| If set to `true`, the layer will be disabled|
@@ -47,8 +46,8 @@ operation: add-layer
 # Layer arn needs to be specified for 'add' or 'update-version' operations
 layer_arn: arn:aws:lambda:us-west-2:689200961921:layer:asserts-aws-lambda-layer-python:8
 
-# ASSERTS_METRICSTORE_HOST
-ASSERTS_METRICSTORE_HOST: https://chief.tsdb.dev.asserts.ai/api/v1/import/prometheus
+# Metric Ingestion endpoint
+ASSERTS_METRIC_ENDPOINT: https://chief.tsdb.dev.asserts.ai/api/v1/import/prometheus
 
 # ASSERTS_TENANT_NAME and ASSERTS_PASSWORD is optional
 ASSERTS_TENANT_NAME: chief

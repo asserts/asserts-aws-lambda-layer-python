@@ -1,3 +1,4 @@
+importlib-metadata==6.0.0
 opentelemetry-instrumentation-aiohttp-client==0.39b0
 opentelemetry-util-http==0.39b0
 asgiref~=3.6

@@ -30,7 +30,7 @@ class RepeatedTimer(object, metaclass=Singleton):
         if self.layer_disabled:
             return
         self.metrics = LambdaMetrics()
-        self.hostname = os.environ.get('ASSERTS_METRICSTORE_HOST')
+        self.hostname = os.environ.get('ASSERTS_METRIC_ENDPOINT')
         self.tenantname = os.environ.get('ASSERTS_TENANT_NAME')
         self.password = os.environ.get('ASSERTS_PASSWORD')
 

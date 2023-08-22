@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
 import re
 import boto3
 import yaml
+import logging
 
 # Get the Lambda Client
 lambda_client = boto3.client('lambda')
@@ -41,35 +43,58 @@ if operation == 'add-layer' and layer_arn is None:
     print("Config file 'config.yml' is invalid. 'layer_arn' needs to be specified for `add` operation")
     raise ()
 
-variables = {
-    'AWS_LAMBDA_EXEC_WRAPPER': '/opt/asserts-wrapper'
-}
-host = 'ASSERTS_METRICSTORE_HOST'
-port = 'ASSERTS_METRICSTORE_PORT'
-tenant_name = 'ASSERTS_TENANT_NAME'
-password = 'ASSERTS_PASSWORD'
-env = 'ASSERTS_ENVIRONMENT'
-site = 'ASSERTS_SITE'
+ACCOUNT_ID = 'ACCOUNT_ID'
+ASSERTS_METRIC_ENDPOINT = 'ASSERTS_METRIC_ENDPOINT'
+TENANT_NAME = 'ASSERTS_TENANT_NAME'
+PASSWORD = 'ASSERTS_PASSWORD'
+ENV = 'ASSERTS_ENVIRONMENT'
+SITE = 'ASSERTS_SITE'
+DEBUG = 'DEBUG'
+LAYER_DISABLE_FLAG = 'ASSERTS_LAYER_DISABLED'
 
-if operation in 'add-layer' and config.get(host) is None:
-    print("Config file 'config.yml' is invalid. '" + host + "' is not specified")
+# OTEL variables
+ENABLE_TRACING = 'ENABLE_TRACING'
+OTEL_EXPORTER_ENDPOINT = 'OTEL_EXPORTER_OTLP_ENDPOINT'
+OTEL_LOG_LEVEL = 'OTEL_LOG_LEVEL'
+OTEL_PYTHON_ID_GENERATOR = 'OTEL_PYTHON_ID_GENERATOR'
+OTEL_RESOURCE_ATTRIBUTES = 'OTEL_RESOURCE_ATTRIBUTES'
+OTEL_TRACES_SAMPLER = 'OTEL_TRACES_SAMPLER'
+
+# Lambda runtime variables
+AWS_LAMBDA_EXEC_WRAPPER = 'AWS_LAMBDA_EXEC_WRAPPER'
+
+variable_names = [
+    ACCOUNT_ID,
+    ENV,
+    SITE,
+    ASSERTS_METRIC_ENDPOINT,
+    TENANT_NAME,
+    PASSWORD,
+    LAYER_DISABLE_FLAG,
+    DEBUG,
+    ENABLE_TRACING,
+    OTEL_EXPORTER_ENDPOINT,
+    OTEL_LOG_LEVEL,
+    OTEL_PYTHON_ID_GENERATOR,
+    OTEL_TRACES_SAMPLER,
+    OTEL_RESOURCE_ATTRIBUTES
+]
+
+new_variables = {
+    AWS_LAMBDA_EXEC_WRAPPER: '/opt/asserts-wrapper',
+    OTEL_PYTHON_ID_GENERATOR: 'xray'
+}
+
+if operation in 'add-layer' and config.get(ASSERTS_METRIC_ENDPOINT) is None:
+    print("Config file 'config.yml' is invalid. '" + ASSERTS_METRIC_ENDPOINT + "' is not specified")
     raise ()
 
-if config.get(host) is not None:
-    variables['ASSERTS_METRICSTORE_HOST'] = config[host]
-if config.get(port) is not None:
-    variables['ASSERTS_METRICSTORE_PORT'] = config[port]
-if config.get(tenant_name) is not None:
-    variables['ASSERTS_TENANT_NAME'] = config[tenant_name]
-if config.get(password) is not None:
-    variables['ASSERTS_PASSWORD'] = config[password]
-if config.get(env) is not None:
-    variables['ASSERTS_ENVIRONMENT'] = config[env]
-if config.get(site) is not None:
-    variables['ASSERTS_SITE'] = config[site]
+for var in variable_names:
+    if config.get(var) is not None:
+        new_variables[var] = config[var]
 
 caller_identity = sts_client.get_caller_identity()
-variables['ACCOUNT_ID'] = caller_identity.get('Account')
+new_variables[ACCOUNT_ID] = caller_identity.get('Account')
 
 
 def update_all_functions():
@@ -87,7 +112,7 @@ def update_all_functions():
 
 def update_functions(fns):
     for fn in fns['Functions']:
-        if (fn['Runtime'] == 'python3.8' or fn['Runtime'] == 'python3.9') and should_update_fn(fn):
+        if (fn['Runtime'] in ['python3.7', 'python3.8', 'python3.9', 'python3.8']) and should_update_fn(fn):
             if operation == 'add-layer':
                 add_layer(fn)
             elif operation == 'remove-layer':
@@ -115,24 +140,24 @@ def remove_layer(fn):
     if asserts_layer is not None:
         layers.remove(asserts_layer)
         current_variables = fn['Environment']['Variables']
-        asserts_properties = list(filter(lambda _key: 'ASSERTS_' in _key, current_variables.keys()))
-        for key in asserts_properties:
-            current_variables.pop(key)
-        current_variables.pop('AWS_LAMBDA_EXEC_WRAPPER')
+        for key in variable_names:
+            if current_variables.get(key) is not None:
+                current_variables.pop(key)
+        current_variables.pop(AWS_LAMBDA_EXEC_WRAPPER)
         update_fn(fn, {'Variables': current_variables}, layers)
 
 
 def disable_layer(fn):
     if get_asserts_layer(fn) is not None:
         current_variables = fn['Environment']['Variables']
-        current_variables['ASSERTS_LAYER_DISABLED'] = 'true'
+        current_variables[LAYER_DISABLE_FLAG] = 'true'
         update_fn(fn, {'Variables': current_variables}, None)
 
 
 def enable_layer(fn):
     if get_asserts_layer(fn) is not None:
         current_variables = fn['Environment']['Variables']
-        current_variables['ASSERTS_LAYER_DISABLED'] = 'false'
+        current_variables[LAYER_DISABLE_FLAG] = 'false'
         update_fn(fn, {'Variables': current_variables}, None)
     return
 
@@ -141,7 +166,8 @@ def add_layer(fn):
     layers = get_layer_arns(fn)
     layers.append(layer_arn)
 
-    _env = {'Variables': variables}
+    _env = {'Variables': new_variables}
+    add_resource_attributes(fn, new_variables)
     if fn.get('Environment') is not None:
         merge_variables(_env, fn)
 
@@ -150,7 +176,8 @@ def add_layer(fn):
 
 
 def update_config(fn):
-    _env = {'Variables': variables}
+    _env = {'Variables': new_variables}
+    add_resource_attributes(fn, new_variables)
     if get_asserts_layer(fn) is not None:
         if fn.get('Environment') is not None:
             merge_variables(_env, fn)
@@ -192,20 +219,32 @@ def update_fn(fn, _env, layers):
 
 
 def merge_variables(_env, fn):
-    provided_vars = list(variables.keys())  
+    current_variables = fn['Environment']['Variables']
+
+    # Log diff
+    provided_vars = list(new_variables.keys())
     provided_vars.sort()
-    _variables = fn['Environment']['Variables']
-    current_vars = list(_variables.keys())
+
+    current_vars = list(current_variables.keys())
     current_vars.sort()
-    _variables.update(variables)
-    print('Current  : ' + ', '.join(current_vars))
-    print('Provided : ' + ', '.join(provided_vars))
-    for var in ['ASSERTS_ENVIRONMENT', 'ASSERTS_SITE', 'ASSERTS_METRICSTORE_PORT']:
-        if var in current_vars and var not in provided_vars:
-            _variables.pop(var)
-    updated_vars = list(_variables.keys())
+    logging.info('Current  : ' + ', '.join(current_vars))
+    logging.info('Provided : ' + ', '.join(provided_vars))
+
+    # Update
+    current_variables.update(new_variables)
+
+    updated_vars = list(current_variables.keys())
     updated_vars.sort()
-    print('Final    : ' + ', '.join(updated_vars))
+    logging.info('Final    : ' + ', '.join(updated_vars))
+
+
+def add_resource_attributes(fn, new_variables):
+    # Add OTEL_RESOURCE_ATTRIBUTES which is function specific
+    resource_attributes_template = "service.namespace=AWS/Lambda,service.name={name}, asserts.env={env}, asserts.site={site}"
+    resource_attributes = resource_attributes_template.format(name=fn['FunctionName'], env=new_variables[ENV],
+                                                              site=new_variables[SITE])
+    new_variables[OTEL_RESOURCE_ATTRIBUTES] = resource_attributes
+    logging.info(OTEL_RESOURCE_ATTRIBUTES + ':' + resource_attributes)
 
 
 def get_asserts_layer(fn):
