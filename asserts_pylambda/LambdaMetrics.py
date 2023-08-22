@@ -1,7 +1,7 @@
 import os
 import sys
 
-from prometheus_client import Counter, Gauge, CollectorRegistry, ProcessCollector, generate_latest
+from prometheus_client import Counter, Gauge, CollectorRegistry, ProcessCollector, PlatformCollector, generate_latest
 
 
 class Singleton(type):
@@ -16,12 +16,13 @@ class Singleton(type):
 class LambdaMetrics(metaclass=Singleton):
     a_labelNames = ['account_id', 'region', 'asserts_source', 'function_name', 'instance', 'job',
                     'namespace', 'asserts_site',
-                    'asserts_env', 'version', 'runtime']
+                    'asserts_env', 'version', 'runtime', 'layer_version']
 
     def __init__(self):
         self.registry = CollectorRegistry()
         self.process_registry = CollectorRegistry()
         self.process = ProcessCollector(registry=self.process_registry)
+        self.platform = PlatformCollector(registry=self.process_registry)
         self.is_cold_start = True
         self.runtime = 'python'
         self.cold_start = Gauge('aws_lambda_cold_start', 'Cold Start indicator',
@@ -42,6 +43,7 @@ class LambdaMetrics(metaclass=Singleton):
         self.asserts_source = 'prom-client'
         self.instance = os.uname()[1]
         self.runtime_version = sys.version
+        self.layer_version = '__layer_version__'
 
         self.function_name = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
         self.job = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
@@ -62,31 +64,31 @@ class LambdaMetrics(metaclass=Singleton):
         if self.is_cold_start is True:
             self.cold_start.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                                 self.job, self.namespace, self.asserts_site, self.asserts_env,
-                                self.version, self.runtime).set(1)
+                                self.version, self.runtime, self.layer_version).set(1)
         else:
             self.cold_start.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                                 self.job, self.namespace, self.asserts_site, self.asserts_env,
-                                self.version, self.runtime).set(0)
+                                self.version, self.runtime, self.layer_version).set(0)
 
         self.virtual_mem.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                                 self.job, self.namespace, self.asserts_site, self.asserts_env,
-                                self.version, self.runtime).set(
+                                self.version, self.runtime, self.layer_version).set(
             self.process_registry.get_sample_value('process_virtual_memory_bytes'))
         self.res_mem.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                             self.job, self.namespace, self.asserts_site, self.asserts_env,
-                            self.version, self.runtime).set(self.process_registry.get_sample_value('process_resident_memory_bytes'))
+                            self.version, self.runtime, self.layer_version).set(self.process_registry.get_sample_value('process_resident_memory_bytes'))
         self.start_time.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                                self.job, self.namespace, self.asserts_site, self.asserts_env,
-                               self.version, self.runtime).set(self.process_registry.get_sample_value('process_start_time_seconds'))
+                               self.version, self.runtime, self.layer_version).set(self.process_registry.get_sample_value('process_start_time_seconds'))
         self.open_fd.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                             self.job, self.namespace, self.asserts_site, self.asserts_env,
-                            self.version, self.runtime).set(self.process_registry.get_sample_value('process_open_fds'))
+                            self.version, self.runtime, self.layer_version).set(self.process_registry.get_sample_value('process_open_fds'))
         self.max_fd.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                            self.job, self.namespace, self.asserts_site, self.asserts_env,
-                           self.version, self.runtime).set(self.process_registry.get_sample_value('process_max_fds'))
+                           self.version, self.runtime, self.layer_version).set(self.process_registry.get_sample_value('process_max_fds'))
         self.cpu_seconds.labels(self.account_id, self.region, self.asserts_source, self.function_name, self.instance,
                                 self.job, self.namespace, self.asserts_site, self.asserts_env,
-                                self.version, self.runtime).inc(self.process_registry.get_sample_value('process_cpu_seconds_total'))
+                                self.version, self.runtime, self.layer_version).inc(self.process_registry.get_sample_value('process_cpu_seconds_total'))
 
 
     @property
