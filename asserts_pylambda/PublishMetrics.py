@@ -1,6 +1,6 @@
 import time, threading
 import http.client
-import os, ssl
+import os
 from base64 import b64encode
 import logging
 import requests
@@ -9,10 +9,6 @@ from asserts_pylambda.LambdaMetrics import LambdaMetrics
 from asserts_pylambda.AssertsUtils import is_layer_disabled
 
 logger = logging.getLogger()
-
-if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
-        getattr(ssl, '_create_unverified_context', None)):
-    ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class Singleton(type):
